@@ -74,7 +74,7 @@ public class ViaCep {
         try {
             Boolean error = jsonObject.get("erro").getAsBoolean();
             return error;
-        } catch (UnsupportedOperationException exception) {
+        } catch (UnsupportedOperationException | NullPointerException exception) {
             return true;
         }
     }
