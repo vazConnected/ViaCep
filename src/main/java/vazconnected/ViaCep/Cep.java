@@ -78,20 +78,19 @@ public class Cep {
 	}
 	
 	public static String formatCep(String cep) {
-        Pattern pattern = Pattern.compile("\\d");
-        StringBuilder builder = new StringBuilder();
-
-        for (char c : cep.toCharArray()) {
-            if (pattern.matcher(Character.toString(c)).matches()) {
-                builder.append(c);
-            }
-        }
+		String formatedCep = "";
+		
+		for (Character ch: cep.toCharArray()) {
+			if (ch.isDigit(ch)) {
+				formatedCep += ch;
+			}
+		}
         
-        if (builder.length() != 8) {
+        if (formatedCep.length() != 8) {
         	throw new InvalidParameterException("O Cep nao contem a quantidade de digitos necessaria.");
         }
 
-        return builder.toString();
+        return formatedCep;
 	}
 	
 }

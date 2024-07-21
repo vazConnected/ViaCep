@@ -9,5 +9,4 @@ public class ViaCepApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ViaCepApplication.class, args);
 	}
-
 }
