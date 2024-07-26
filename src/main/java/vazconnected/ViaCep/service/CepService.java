@@ -31,9 +31,22 @@ public class CepService {
 	}
 	
 	public Cep getCepData(String cepInput) {
-		if (!Cep.isValid(cepInput))
+		if (!Cep.isValid(cepInput)) {
 			throw new IllegalArgumentException("O cep não está formatado corretamente");
+		} else {
+			cepInput = Cep.formatCep(cepInput);
+		}
 		
+		Cep cepFromCache = Cep.searchCepInCache(cepInput);
+		if (cepFromCache != null) {
+			return cepFromCache;
+		}
+		
+        Cep cepFromViaCep = this.getFromViaCepApi(cepInput);
+        return cepFromViaCep;
+	}
+	
+	private Cep getFromViaCepApi(String cepInput) {
 		HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder().uri( this.getCepUri(cepInput) ).build();
 
@@ -50,8 +63,13 @@ public class CepService {
         if (gson.fromJson(response, JsonObject.class).get("erro") != null) {
             throw new RuntimeException("O cep informado não consta na base de dados da ViaCep.");
         }
-
-        return gson.fromJson(response, Cep.class);
+        
+        Cep cep = gson.fromJson(response, Cep.class);
+        cep.setFromCache(false);
+        
+        Cep.saveCepInCache((Cep) cep.clone());
+        
+        return cep;
 	}
 
 	public boolean deleteCepFromCache(String cep) {
