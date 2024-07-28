@@ -6,10 +6,10 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import vazconnected.ViaCep.Cep;
+import vazconnected.ViaCep.dto.cepDeletion.CepDeletionOutput;
 import vazconnected.ViaCep.dto.cepSearch.CepSearchOutputDto;
 import vazconnected.ViaCep.dto.cepSearch.CepSearchSuccessOutputDto;
 import vazconnected.ViaCep.service.CepService;
@@ -35,8 +35,13 @@ public class CepController {
     }
     
     @DeleteMapping("/{cep}")
-    @ResponseStatus(HttpStatus.I_AM_A_TEAPOT)
-    public boolean deleteCepDataFromCache(@PathVariable("cep") String cep) {
-        return cepService.deleteCepFromCache(cep);
+    public ResponseEntity<CepDeletionOutput> deleteCepDataFromCache(@PathVariable("cep") String cep) {
+    	CepDeletionOutput output = new CepDeletionOutput(cepService.deleteCepFromCache(cep));
+    	
+    	if (output.deleted()) {
+    		return ResponseEntity.status(HttpStatus.OK).body(output);
+    	} else {
+    		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(output);
+    	}
     }
 }

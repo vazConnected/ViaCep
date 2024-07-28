@@ -14,14 +14,14 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 
 import vazconnected.ViaCep.Cep;
-import vazconnected.ViaCep.dto.cepSearch.CepSearchErrorOutputDto;
+import vazconnected.ViaCep.dto.ErrorOutputDto;
 import vazconnected.ViaCep.dto.cepSearch.CepSearchOutputDto;
 import vazconnected.ViaCep.dto.cepSearch.CepSearchSuccessOutputDto;
 
 @Service
 public class CepService {
-	public static final String baseUrl = "https://viacep.com.br/ws/";
-	public static final String defaultResponseMode = "/json/";
+	private static final String baseUrl = "https://viacep.com.br/ws/";
+	private static final String defaultResponseMode = "/json/";
 
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
@@ -49,7 +49,7 @@ public class CepService {
 		try {
 			cepFromViaCep = this.getFromViaCepApi(cepInput);
 		} catch (Exception e) {
-			return new CepSearchErrorOutputDto(e.getClass().getCanonicalName(), e.getLocalizedMessage());
+			return new ErrorOutputDto(e.getClass().getCanonicalName(), e.getLocalizedMessage());
 		}
 
 		return new CepSearchSuccessOutputDto(cepFromViaCep, false);
@@ -59,31 +59,22 @@ public class CepService {
 		return Cep.deleteCepFromCache(cep);
 	}
 	
-	private Cep getFromViaCepApi(String cepInput) {
+	private Cep getFromViaCepApi(String cepInput) throws IOException, InterruptedException {
 		HttpClient client = HttpClient.newHttpClient();
 		HttpRequest request = HttpRequest.newBuilder().uri(this.getCepUri(cepInput)).build();
 
-		String response = null;
-		try {
-			System.out.println("Enviando requisição ao ViaCep...");
-			response = client.send(request, HttpResponse.BodyHandlers.ofString()).body();
-		} catch (IOException exception) {
-			throw new RuntimeException(
-					"Não foi possível obter as informações dos servidores ViaCep. Tente novamente mais tarde.");
-		} catch (InterruptedException exception) {
-			throw new RuntimeException("Erro de interrupção da Thread de requisição: " + exception.getMessage());
-		}
-
-		if (gson.fromJson(response, JsonObject.class).get("erro") != null) {
-			throw new RuntimeException("O cep informado não consta na base de dados da ViaCep.");
+		System.out.println("Enviando requisição ao ViaCep. Pesquisando por Cep...");
+		String response = client.send(request, HttpResponse.BodyHandlers.ofString()).body();
+		
+		JsonObject responseJson = gson.fromJson(response, JsonObject.class);
+		if (responseJson.has("erro")) {
+			String errorMessage = responseJson.get("erro").getAsString();
+			throw new RuntimeException("Erro da API ViaCEP: " + errorMessage);
 		}
 
 		Cep cep = gson.fromJson(response, Cep.class);
-
 		Cep.saveCepInCache((Cep) cep.clone());
 
 		return cep;
-	}
-
-	
+	}	
 }
